@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lunar Landing Analyzer | NASA Space Apps</title>
+<meta name="description" content="3D lunar landing-site analysis prototype using NASA LRO imagery and NASA planetary-data sources.">
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <div class="brandmark">◉</div>
+      <div>
+        <div class="kicker">NASA SPACE APPS • LUNAR OPERATIONS</div>
+        <h1>LUNAR LANDING ANALYZER</h1>
+        <p>Select a point on the Moon. Analyze the environment. Test the landing.</p>
+      </div>
+    </div>
+    <div class="live"><i></i><span id="dataStatus">NASA SOURCES ONLINE</span></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="mission">MISSION</button>
+    <button class="tab" data-tab="analysis">SITE ANALYSIS</button>
+    <button class="tab" data-tab="sim">LANDING SIM</button>
+    <button class="tab" data-tab="sources">NASA DATA</button>
+    <button class="demo-btn" id="demoMode">▶ DEMO MODE</button>
+  </nav>
+
+  <section class="hero">
+    <div class="viewport">
+      <div id="moon"></div>
+      <div class="crosshair" id="crosshair"><span></span></div>
+      <div class="viewhud">
+        <div><span>BODY</span><b>MOON</b></div>
+        <div><span>MISSION</span><b>LUNAR LANDER</b></div>
+        <div><span>DATA</span><b>LRO / PDS</b></div>
+      </div>
+      <div class="instructions">DRAG TO ORBIT • SCROLL TO ZOOM • CLICK THE SURFACE TO SELECT</div>
+    </div>
+
+    <aside class="mission-panel">
+      <div class="section-title">SELECTED LANDING SITE</div>
+      <div class="location" id="location">—</div>
+      <div class="location-sub" id="locationSub">Click the Moon to select coordinates</div>
+
+      <div class="risk-card">
+        <div>
+          <span>SITE ASSESSMENT</span>
+          <strong id="siteClass">AWAITING SITE</strong>
+        </div>
+        <div class="ring" id="riskRing"><b id="riskScore">—</b><small>/100</small></div>
+      </div>
+
+      <div class="metrics">
+        <div><span>ELEVATION</span><b id="elev">—</b></div>
+        <div><span>SLOPE</span><b id="slope">—</b></div>
+        <div><span>TEMP.</span><b id="temp">—</b></div>
+        <div><span>SUN ALT.</span><b id="sunAlt">—</b></div>
+        <div><span>ILLUMINATION</span><b id="illum">—</b></div>
+        <div><span>GRAVITY</span><b>1.62 m/s²</b></div>
+      </div>
+
+      <div class="warning">
+        <span>⚠</span>
+        <p><b>Atmospheric wind: N/A</b><br>The Moon has no substantial atmosphere. Solar-wind conditions are tracked separately.</p>
+      </div>
+
+      <button class="primary" id="startSim">RUN LANDING SIMULATION <span>→</span></button>
+    </aside>
+  </section>
+
+  <main>
+    <section class="tabpage active" id="mission">
+      <div class="cards">
+        <article class="feature">
+          <div class="feature-icon">◒</div>
+          <h2>Choose a site</h2>
+          <p>Rotate the lunar globe and click anywhere on the surface. The interface converts the hit point into lunar latitude and longitude.</p>
+        </article>
+        <article class="feature">
+          <div class="feature-icon">☀</div>
+          <h2>Understand the Sun</h2>
+          <p>Use illumination, Sun altitude and local lighting as landing constraints rather than treating the Moon like an atmosphere-bearing planet.</p>
+        </article>
+        <article class="feature">
+          <div class="feature-icon">🚀</div>
+          <h2>Fly the descent</h2>
+          <p>Configure a lander and watch altitude, vertical speed, fuel and touchdown conditions update in real time.</p>
+        </article>
+      </div>
+
+      <div class="earth-match">
+        <div>
+          <div class="section-title">EARTH ENVIRONMENTAL ANALOGUE</div>
+          <h2 id="earthName">Atacama Desert, Chile</h2>
+          <p id="earthDesc">Prototype similarity model. Production version can query NASA Earthdata variables for the selected criteria.</p>
+        </div>
+        <div class="similarity"><span>SIMILARITY</span><strong id="earthScore">—%</strong></div>
+      </div>
+    </section>
+
+    <section class="tabpage" id="analysis">
+      <div class="analysis-grid">
+        <div class="panel">
+          <div class="section-title">LANDING CONDITIONS</div>
+          <div class="condition"><span>Surface temperature</span><b id="aTemp">—</b></div>
+          <div class="condition"><span>Terrain elevation</span><b id="aElev">—</b></div>
+          <div class="condition"><span>Local slope</span><b id="aSlope">—</b></div>
+          <div class="condition"><span>Sun altitude</span><b id="aSunAlt">—</b></div>
+          <div class="condition"><span>Sun azimuth</span><b id="aSunAz">—</b></div>
+          <div class="condition"><span>Illumination</span><b id="aIllum">—</b></div>
+        </div>
+        <div class="panel">
+          <div class="section-title">HAZARD CHECK</div>
+          <div class="hazard"><span>Terrain slope</span><b id="hSlope">—</b></div>
+          <div class="hazard"><span>Lighting</span><b id="hLight">—</b></div>
+          <div class="hazard"><span>Atmosphere</span><b class="green">NO ATMOSPHERIC WIND</b></div>
+          <div class="hazard"><span>Thermal environment</span><b id="hTemp">—</b></div>
+          <div class="hazard"><span>Data confidence</span><b class="amber">PROTOTYPE</b></div>
+        </div>
+        <div class="panel wide">
+          <div class="section-title">EARTH MATCH BREAKDOWN</div>
+          <div class="barrow"><span>Thermal similarity</span><i><em id="bt"></em></i><b id="btv">—</b></div>
+          <div class="barrow"><span>Terrain similarity</span><i><em id="bterr"></em></i><b id="bterrv">—</b></div>
+          <div class="barrow"><span>Solar context</span><i><em id="bsol"></em></i><b id="bsolv">—</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tabpage" id="sim">
+      <div class="sim-layout">
+        <div class="panel simpanel">
+          <div class="section-title">LANDER CONFIGURATION</div>
+          <div class="formgrid">
+            <label>LANDER
+              <select id="lander"><option>Artemis-class demonstrator</option><option>Small robotic lander</option><option>Heavy cargo lander</option></select>
+            </label>
+            <label>ALTITUDE (m)<input id="alt" type="number" value="2500"></label>
+            <label>VERTICAL SPEED (m/s)<input id="vel" type="number" value="-55"></label>
+            <label>APPROACH ANGLE (°)<input id="angle" type="number" value="12"></label>
+            <label>FUEL (%)<input id="fuel" type="number" value="100"></label>
+            <label>GUIDANCE
+              <select id="guidance"><option>Assisted</option><option>Manual</option></select>
+            </label>
+          </div>
+          <button class="primary" id="run">START DESCENT <span>→</span></button>
+        </div>
+
+        <div class="panel simview">
+          <div class="simtop">
+            <div><span>MISSION CLOCK</span><b id="clock">00:00.0</b></div>
+            <div><span>STATUS</span><b id="status">READY</b></div>
+          </div>
+          <canvas id="canvas"></canvas>
+          <div class="telemetry">
+            <div><span>ALTITUDE</span><b id="tAlt">2500 m</b></div>
+            <div><span>VERTICAL SPEED</span><b id="tVel">-55 m/s</b></div>
+            <div><span>FUEL</span><b id="tFuel">100%</b></div>
+            <div><span>SLOPE</span><b id="tSlope">—</b></div>
+          </div>
+          <div class="simresult" id="simresult">Select a site, configure the lander and start the descent.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tabpage" id="sources">
+      <div class="sourcehero">
+        <div>
+          <div class="section-title">NASA DATA ARCHITECTURE</div>
+          <h2>Built around real lunar science products.</h2>
+          <p>This version queries NASA's PDS Geosciences Node GDS for localized LRO LOLA and Diviner observations after you select a point.</p>
+        </div>
+        <div class="source-status" id="pdsStatus">NASA DATA SERVICE READY</div>
+      </div>
+      <div class="sourcecards">
+        <a href="https://science.nasa.gov/mission/lro/" target="_blank"><b>LRO</b><span>Lunar Reconnaissance Orbiter</span></a>
+        <a href="https://science.nasa.gov/mission/lro/lola/" target="_blank"><b>LOLA</b><span>Elevation, slope, roughness & topography</span></a>
+        <a href="https://pds.nasa.gov/" target="_blank"><b>PDS</b><span>Planetary Data System archive</span></a>
+        <a href="https://naif.jpl.nasa.gov/naif/spice.html" target="_blank"><b>SPICE</b><span>Sun / spacecraft geometry</span></a>
+        <a href="https://worldview.earthdata.nasa.gov/" target="_blank"><b>EARTHDATA</b><span>Earth satellite observations</span></a>
+        <a href="https://science.nasa.gov/resource/lunar-surface-in-color/" target="_blank"><b>LROC MOSAIC</b><span>NASA lunar surface color mosaic</span></a>
+      </div>
+      <div class="dataset-list">
+        <div><span>LRO-L-LOLA-3-RDR-V1.0</span><b>LOLA RDR</b></div>
+        <div><span>LRO-L-DLRE-5-GDR-V1.0</span><b>Diviner GDR</b></div>
+        <div><span>LRO-L-LROC-3-CDR-V1.0</span><b>LROC CDR</b></div>
+        <div><span>LRO-L-SPICE-6-V1.0</span><b>LRO SPICE kernels</b></div>
+      </div>
+      <p class="data-note"><b>V6 provenance:</b> NASA LRO-derived imagery and NASA PDS/Geosciences services are used where available. NASA observations are labelled separately from derived prototype calculations. <br><br>V6 uses a NASA LRO-derived lunar mosaic plus a local backend that queries NASA PDS GDS. LOLA elevation and a derived local slope estimate are sampled from NASA LOLA observations. Diviner brightness temperature and solar geometry are used when observations are available. Earth analogue matching and landing physics remain prototype modules.</p>
+    </section>
+  </main>
+
+  <div class="demo-overlay" id="demoOverlay" hidden><div class="demo-card"><button class="demo-close" id="demoClose">×</button><div class="section-title">PRESENTATION MODE</div><h2>5-step mission walkthrough</h2><ol><li>Select a lunar site on the 3D globe.</li><li>Review NASA LOLA / Diviner observations.</li><li>Inspect hazards and the Earth analogue.</li><li>Run the descent simulation.</li><li>Show the touchdown result and data sources.</li></ol><button class="primary" id="demoStart">START WALKTHROUGH →</button></div></div>
+
+<footer>
+    <span>NASA Space Apps Prototype • Lunar Landing Analyzer</span>
+    <span>NASA data credits: NASA / GSFC / ASU / LRO</span>
+  </footer>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.180.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.180.0/examples/jsm/"}}
+</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
