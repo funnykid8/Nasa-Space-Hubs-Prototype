@@ -130,3 +130,108 @@ main{padding:18px 28px 35px}.tabpage{display:none}.tabpage.active{display:block}
     grid-template-columns: 1fr;
   }
 }
+
+.lunar-controls {
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel2);
+}
+
+.lunar-controls h3 {
+  color: var(--cyan);
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  margin: 12px 0;
+}
+
+.lunar-controls p {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.coordinate-fields,
+.control-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.coordinate-fields label {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.coordinate-fields input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 5px;
+  padding: 10px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.lunar-controls button {
+  cursor: pointer;
+  padding: 10px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.lunar-controls button:hover {
+  border-color: var(--cyan);
+}
+
+#locateSite {
+  color: #021017;
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.source-entry {
+  margin: 9px 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.source-entry strong {
+  display: block;
+  font-size: 11px;
+  color: var(--text);
+}
+
+.source-entry p,
+.source-entry a,
+#liveSources > a {
+  display: block;
+  font-size: 10px;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+
+.source-entry a,
+#liveSources > a {
+  color: var(--cyan);
+}
+
+#selectionStatus {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+  .coordinate-fields,
+  .control-buttons {
+    grid-template-columns: 1fr 1fr;
+  }
+}
