@@ -70,7 +70,7 @@ function selectFromPointer(e){
   raycaster.setFromCamera(pointer,camera);
   const hit=raycaster.intersectObject(moon)[0]; if(!hit)return;
   const ll=xyzToLatLon(hit.point.clone().normalize());
-  selected=ll; updateSite();
+  selected=ll; updateSite(); queryNASA();
   const projected=hit.point.clone().project(camera);
   const cross=document.getElementById("crosshair");
   cross.style.display="block"; cross.style.left=`${(projected.x*.5+.5)*100}%`; cross.style.top=`${(-projected.y*.5+.5)*100}%`;
