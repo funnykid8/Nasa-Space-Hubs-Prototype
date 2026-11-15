@@ -350,3 +350,11 @@ document.getElementById('seleneRecommend')?.addEventListener('click',async()=>{
  }catch(e){out.textContent='Recommendation failed: '+e.message+' — check GROQ_API_KEY and Render logs.'}
  finally{btn.disabled=false;}
 });
+
+
+// One-click, portable site report export (JSON + readable mission snapshot)
+document.getElementById('exportSite')?.addEventListener('click',()=>{
+ const m=metrics(),now=new Date();
+ const report={title:'Lunar Landing Analyzer — Site Report',generated_utc:now.toISOString(),coordinates:{latitude_deg:+selected.lat.toFixed(6),longitude_deg:+selected.lon.toFixed(6)},assessment:{score:m.score??50,classification:document.getElementById('siteClass')?.textContent,metrics:{elevation_m:m.elevation,slope_deg:m.slope,temperature_c:m.temp,sun_altitude_deg:m.sunAlt,illumination_percent:m.illumination??m.illum,terrain_score:m.terrain,thermal_score:m.thermal,solar_score:m.solar},source:m.source},nasa_observations:nasaSite||null,simulation:{status:document.getElementById('status')?.textContent,altitude:document.getElementById('tAlt')?.textContent,vertical_speed:document.getElementById('tVel')?.textContent,fuel:document.getElementById('tFuel')?.textContent,result:document.getElementById('simresult')?.textContent},note:'Prototype decision aid; verify mission-critical values against authoritative NASA data.'};
+ const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='lunar-site-'+selected.lat.toFixed(2)+'-'+selected.lon.toFixed(2)+'.json';a.click();URL.revokeObjectURL(url);setText('mapNote','SITE REPORT EXPORTED · JSON snapshot downloaded');
+});
