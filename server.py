@@ -234,13 +234,19 @@ def ai_reply(payload):
           'Distinguish Diviner brightness temperature from true surface temperature, and never present this prototype score as certified landing safety. '
           'Moon has no substantial atmosphere: no atmospheric wind. Provide actionable analysis, units, assumptions, and safety caveats. '
           'Current selected-site and simulator context (JSON): '+json.dumps(context)[:5000])
-        body=json.dumps({'model':os.environ.get('GROQ_MODEL','llama-3.3-70b-versatile'),'temperature':0.35,'max_tokens':900,
+        body=json.dumps({'model':os.environ.get('GROQ_MODEL','openai/gpt-oss-120b'),'temperature':0.35,'max_tokens':900,
           'messages':[{'role':'system','content':system}]+safe}).encode()
         req=Request('https://api.groq.com/openai/v1/chat/completions',data=body,headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'},method='POST')
         with urlopen(req,timeout=35) as response: data=json.loads(response.read().decode())
         return {'answer':data['choices'][0]['message']['content']},200
     except Exception as e:
-        return {'error':'Copilot request failed: '+str(e)[:240]},502
+        detail=str(e)
+        try:
+            from urllib.error import HTTPError
+            if isinstance(e,HTTPError):
+                detail=e.read().decode('utf-8','replace')[:700]
+        except Exception: pass
+        return {'error':'Groq API error: '+detail[:700]},502
 
 
 if __name__=='__main__':

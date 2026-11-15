@@ -18,7 +18,7 @@ root.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera,renderer.domElement);
 controls.enableDamping=true; controls.dampingFactor=.06; controls.minDistance=1.65; controls.maxDistance=6;
-controls.enablePan=false;
+controls.enablePan=true; controls.zoomSpeed=1.25; controls.rotateSpeed=.65;
 
 const stars = new THREE.BufferGeometry();
 const positions=[];
@@ -156,7 +156,7 @@ queryNASA();
 
 function resize(){const w=root.clientWidth,h=root.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);}
 window.addEventListener("resize",resize);
-function animate(){requestAnimationFrame(animate);moonGroup.rotation.y+=.00035;controls.update();renderer.render(scene,camera);} animate();
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);} animate();
 
 document.querySelectorAll(".tab").forEach(btn=>btn.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
