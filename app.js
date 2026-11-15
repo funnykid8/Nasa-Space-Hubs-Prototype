@@ -220,7 +220,7 @@ let siteTerrain=null,siteRocks=null;
 function refreshSimTerrain(){
  if(siteTerrain){simScene.remove(siteTerrain);siteTerrain.geometry.dispose();siteTerrain.material.dispose();}
  if(siteRocks){simScene.remove(siteRocks);siteRocks.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});}
- const m=metrics(),seed=Math.abs(Math.sin(selected.lat*12.9898+selected.lon*78.233))*10000;
+ const m=metrics();let seed=Math.abs(Math.sin(selected.lat*12.9898+selected.lon*78.233))*10000;
  const geo=new THREE.PlaneGeometry(14,14,110,110);geo.rotateX(-Math.PI/2);
  const p=geo.attributes.position;
  for(let i=0;i<p.count;i++){
