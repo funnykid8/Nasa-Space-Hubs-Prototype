@@ -216,12 +216,12 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 
-# AI mission copilot (Groq OpenAI-compatible API; server-side secret only)
+# AI mission copilot (OpenAI API; server-side secret only)
 def ai_reply(payload):
-    key=os.environ.get('GROQ_API_KEY','').strip()
-    if not key: return {'error':'AI is not configured yet. Add GROQ_API_KEY to your Render environment variables.'},503
+    key=os.environ.get('OPENAI_API_KEY','').strip()
+    if not key: return {'error':'AI is not configured. Add OPENAI_API_KEY in Render Environment Variables.'},503
     try:
-        from urllib.request import Request, urlopen
+        from openai import OpenAI
         messages=payload.get('messages',[])
         if not isinstance(messages,list): raise ValueError('messages must be a list')
         safe=[]
@@ -234,20 +234,16 @@ def ai_reply(payload):
           'Distinguish Diviner brightness temperature from true surface temperature, and never present this prototype score as certified landing safety. '
           'Moon has no substantial atmosphere: no atmospheric wind. Provide actionable analysis, units, assumptions, and safety caveats. '
           'Current selected-site and simulator context (JSON): '+json.dumps(context)[:5000])
-        body=json.dumps({'model':os.environ.get('GROQ_MODEL','openai/gpt-oss-120b'),'temperature':0.35,'max_tokens':900,
-          'messages':[{'role':'system','content':system}]+safe}).encode()
-        req=Request('https://api.groq.com/openai/v1/chat/completions',data=body,headers={'Authorization':'Bearer '+key,'Content-Type':'application/json','User-Agent':'NASA-Space-Hubs-Copilot/1.0'},method='POST')
-        with urlopen(req,timeout=35) as response: data=json.loads(response.read().decode())
-        return {'answer':data['choices'][0]['message']['content']},200
+        response=OpenAI(api_key=key).chat.completions.create(
+            model=os.environ.get('OPENAI_MODEL','gpt-4o-mini'),
+            temperature=0.35,
+            max_tokens=900,
+            messages=[{'role':'system','content':system}]+safe
+        )
+        answer=response.choices[0].message.content or ''
+        return {'answer':answer},200
     except Exception as e:
-        detail=str(e)
-        try:
-            from urllib.error import HTTPError
-            if isinstance(e,HTTPError):
-                detail=e.read().decode('utf-8','replace')[:700]
-        except Exception: pass
-        return {'error':'Groq API error: '+detail[:700]},502
-
+        return {'error':'OpenAI API error: '+str(e)[:700]},502
 
 if __name__=='__main__':
     os.chdir(ROOT)
