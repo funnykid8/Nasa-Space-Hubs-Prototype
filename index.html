@@ -106,6 +106,19 @@
     </section>
 
     <section class="tabpage" id="analysis">
+      <div class="panel selene-recommender">
+        <div class="section-title">SELENE · MISSION DECISION SUPPORT</div>
+        <h2>Personalized landing-site recommendation</h2>
+        <p class="data-note">Choose mission priorities. Groq evaluates this selected point and its available data; estimates are explicitly identified.</p>
+        <div class="selene-controls">
+          <label>MISSION OBJECTIVE<select id="missionObjective"><option value="crew safety">Crew safety</option><option value="ice exploration">Ice exploration</option><option value="science">Scientific exploration</option><option value="permanent base">Permanent base</option></select></label>
+          <label>RISK TOLERANCE<select id="missionRisk"><option value="conservative">Conservative</option><option value="balanced">Balanced</option><option value="aggressive">Aggressive</option></select></label>
+          <label>SUNLIGHT PRIORITY<select id="missionSun"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
+          <label>ICE PRIORITY<select id="missionIce"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
+        </div>
+        <button class="primary" id="seleneRecommend">GET PERSONALIZED AI RECOMMENDATION →</button>
+        <div class="selene-result" id="seleneResult">Your recommendation will appear here. Requires a configured GROQ_API_KEY.</div>
+      </div>
       <div class="analysis-grid">
         <div class="panel">
           <div class="section-title">LANDING CONDITIONS</div><p id="mapNote" class="data-note">Use the Moon Map Tools above. Site finder and estimated overlays use prototype calculations; NASA observations remain separately labeled.</p>
