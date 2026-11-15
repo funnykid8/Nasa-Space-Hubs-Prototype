@@ -179,25 +179,31 @@ function drawLander(y,angle,terrain,status){
   if(status){ctx.font="900 16px system-ui";ctx.fillStyle=status==="success"?"#72f5a5":"#ff6675";ctx.fillText(status==="success"?"SOFT LANDING":"LANDING FAILED",16,25);}
 }
 function runSim(){
-  if(running)return;running=true;
-  let alt=+document.getElementById("alt").value||2500,vel=+document.getElementById("vel").value||-55,fuel=+document.getElementById("fuel").value||100,t=0;
-  const slope=metrics().slope,terrain=canvas.clientHeight-42,dt=.05;
+  if(running)return;
+  let alt=Number(document.getElementById("alt").value),vel=Number(document.getElementById("vel").value),fuel=Number(document.getElementById("fuel").value),angle=Number(document.getElementById("angle").value);
+  if(!Number.isFinite(alt)||alt<=0||!Number.isFinite(vel)||vel>=0||!Number.isFinite(fuel)||fuel<=0||fuel>100||!Number.isFinite(angle)){setText("simresult","Check inputs: altitude > 0, vertical speed negative, fuel 1–100%, and a valid approach angle.");setText("status","INVALID INPUT");return;}
+  running=true;let t=0;const slope=metrics().slope,terrain=canvas.clientHeight-42,dt=.05;
+  setText("status","DESCENDING");setText("simresult","Guidance engaged — braking and throttle are active.");
   function step(){
-    const burn=Math.min(8,Math.max(0,(Math.abs(vel)-2)*.13));
-    const thrust=fuel>0?burn:0; vel+=(1.62-thrust)*dt;alt+=vel*dt;fuel=Math.max(0,fuel-thrust*.008);t+=dt;
-    drawLander(terrain-(Math.max(0,alt)/2500)*(terrain-35),+document.getElementById("angle").value||12,terrain);
-    setText("clock",`00:${t.toFixed(1).padStart(4,"0")}`);setText("tAlt",`${Math.max(0,Math.round(alt))} m`);
-    setText("tVel",`${vel.toFixed(1)} m/s`);setText("tFuel",`${Math.round(fuel)}%`);setText("tSlope",`${slope.toFixed(1)}°`);setText("status","DESCENDING");
+    // Simplified closed-loop vertical guidance: brake early, then taper descent near touchdown.
+    const maxBrake=4.2,desiredVel=-Math.min(55,Math.sqrt(2*maxBrake*Math.max(alt,0)));
+    const accel=clamp((desiredVel-vel)*.9,-1.5,maxBrake);
+    const thrustAccel=1.62+accel,thrustRatio=clamp(thrustAccel/5.82,0,1);
+    if(fuel<=0){vel-=1.62*dt;}else{vel+=accel*dt;fuel=Math.max(0,fuel-thrustRatio*.10*dt);}
+    alt+=vel*dt;t+=dt;
+    drawLander(terrain-(Math.max(0,alt)/Math.max(2500,alt+1))*(terrain-35),angle,terrain);
+    setText("clock",`T+${t.toFixed(1)} s`);setText("tAlt",`${Math.max(0,Math.round(alt))} m`);
+    setText("tVel",`${vel.toFixed(1)} m/s`);setText("tFuel",`${Math.round(fuel)}%`);setText("tSlope",`${slope.toFixed(1)}°`);
     if(alt<=0){
-      running=false;const ok=Math.abs(vel)<=6&&slope<=12&&fuel>1;setText("status",ok?"SUCCESS":"FAILED");
-      drawLander(terrain-16,0,terrain,ok?"success":"failure");
-      setText("simresult",ok?`🟢 Touchdown achieved. Final vertical speed ${vel.toFixed(1)} m/s; slope ${slope.toFixed(1)}°.`:`🔴 Touchdown outside prototype limits. Final vertical speed ${vel.toFixed(1)} m/s; slope ${slope.toFixed(1)}°.`);
+      running=false;const safe=Math.abs(vel)<=6&&slope<=12&&fuel>0;
+      setText("status",safe?"TOUCHDOWN":"CRASH");drawLander(terrain-16,0,terrain,safe?"success":"failure");
+      setText("simresult",safe?`🟢 Touchdown! Vertical speed ${vel.toFixed(1)} m/s · slope ${slope.toFixed(1)}° · fuel ${fuel.toFixed(1)}%.`:`🔴 Unsafe touchdown. Vertical speed ${vel.toFixed(1)} m/s · slope ${slope.toFixed(1)}° · fuel ${fuel.toFixed(1)}%.`);
       return;
     }
-    if(t>90){running=false;setText("status","TIMEOUT");return;}
+    if(t>180){running=false;setText("status","TIMEOUT");setText("simresult","Simulation timed out at 180 s. Increase starting fuel or reduce initial descent speed.");return;}
     requestAnimationFrame(step);
   }
-  setText("simresult","Descent initiated…");step();
+  step();
 }
 document.getElementById("run").addEventListener("click",runSim);
 
