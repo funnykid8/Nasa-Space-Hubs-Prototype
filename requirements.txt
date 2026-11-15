@@ -1,1 +1,2 @@
 # No third-party Python packages required.
+openai>=1.30.0
