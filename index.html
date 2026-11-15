@@ -231,5 +231,15 @@
 document.querySelectorAll('.tab[data-tab]').forEach(function(btn){btn.addEventListener('click',function(){document.querySelectorAll('.tab[data-tab]').forEach(function(t){t.classList.remove('active')});document.querySelectorAll('.tabpage').forEach(function(p){p.classList.remove('active')});btn.classList.add('active');var page=document.getElementById(btn.dataset.tab);if(page)page.classList.add('active')})});
 </script>
 <script type="module" src="app.js"></script>
+
+<style>
+#tourBtn{background:linear-gradient(135deg,#ffb000,#ff5b35)!important;color:#130800!important;border:2px solid #ffe6a0!important;border-radius:12px!important;padding:12px 18px!important;font-weight:900!important;font-size:14px!important;box-shadow:0 0 22px #ff8b354d!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;gap:8px!important;position:relative!important;z-index:50!important}
+#tourBtn:hover{transform:translateY(-2px);filter:brightness(1.12)}
+.demo-launch{position:sticky;top:8px;z-index:1000;display:flex;justify-content:center;padding:8px;background:#020812cc;backdrop-filter:blur(8px)}
+</style>
+<div class="demo-launch"><button id="tourBtn" type="button">🎬 LAUNCH LIVE DEMO TOUR</button></div>
+<script>
+(function(){const b=document.getElementById('tourBtn');if(!b)return;b.addEventListener('click',function(){const steps=[['mission','1 · CHOOSE YOUR MOON SITE','Click the 3D Moon to select your landing coordinates.'],['analysis','2 · AI + SITE INTELLIGENCE','Explore site score, hazards, sunlight and SELENE recommendations.'],['sim','3 · LIVE LANDING SIM','Run descent and watch altitude, velocity and fuel telemetry.'],['sources','4 · NASA DATA SOURCES','Review NASA data sources and provenance.'],['ai','5 · MISSION COPILOT','Ask SELENE questions or generate the mission briefing.']];let i=0;const o=document.createElement('div');o.style='position:fixed;inset:0;z-index:99999;background:#020812eF;display:grid;place-items:center;padding:20px';o.innerHTML='<div style="max-width:560px;width:100%;padding:28px;background:#0b1b2d;color:#eaf7ff;border:2px solid #ffb000;border-radius:20px;font:16px system-ui;box-shadow:0 0 60px #ff9a0044"><small style="color:#ffb000;font-weight:bold">LUNAR LANDING ANALYZER · GUIDED DEMO</small><h2 id="dt" style="font-size:26px"></h2><p id="dp" style="line-height:1.6"></p><div style="display:flex;justify-content:space-between;gap:12px"><button id="dx">EXIT</button><button id="dn" style="background:#ffb000;border:0;padding:12px 20px;border-radius:9px;font-weight:900">NEXT →</button></div></div>';document.body.append(o);function show(){document.querySelector('[data-tab="'+steps[i][0]+'"]')?.click();o.querySelector('#dt').textContent=steps[i][1];o.querySelector('#dp').textContent=steps[i][2];o.querySelector('#dn').textContent=i===steps.length-1?'FINISH ✓':'NEXT →'}show();o.querySelector('#dn').onclick=()=>{if(++i===steps.length)o.remove();else show()};o.querySelector('#dx').onclick=()=>o.remove()})})();
+</script>
 </body>
 </html>
