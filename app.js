@@ -70,7 +70,7 @@ function selectFromPointer(e){
   raycaster.setFromCamera(pointer,camera);
   const hit=raycaster.intersectObject(moon)[0]; if(!hit)return;
   const ll=xyzToLatLon(hit.point.clone().normalize());
-  selected=ll; updateSite();
+  selected=ll; updateSite(); queryNASA();
   const projected=hit.point.clone().project(camera);
   const cross=document.getElementById("crosshair");
   cross.style.display="block"; cross.style.left=`${(projected.x*.5+.5)*100}%`; cross.style.top=`${(-projected.y*.5+.5)*100}%`;
@@ -213,3 +213,13 @@ document.getElementById('demoStart')?.addEventListener('click',()=>{
   document.querySelector('[data-tab="analysis"]').click();
   setTimeout(()=>{ document.querySelector('[data-tab="sim"]').click(); setTimeout(()=>document.getElementById('run').click(),500); },1600);
 });
+
+
+// AI mission copilot chat
+const chatLog=document.getElementById('chatLog'), aiForm=document.getElementById('aiForm'), aiInput=document.getElementById('aiInput');
+let chatHistory=[];
+function addChat(role,text){const node=document.createElement('div');node.className='chat-msg '+role;const title=document.createElement('b');title.textContent=role==='user'?'YOU':'SELENE COPILOT';const p=document.createElement('p');p.textContent=text;node.append(title,p);chatLog.append(node);chatLog.scrollTop=chatLog.scrollHeight;}
+function copilotContext(){const m=metrics();return {selected_site:{latitude:+selected.lat.toFixed(5),longitude:+selected.lon.toFixed(5),metrics:m,nasa_observations:nasaSite||'No NASA response available; current values may be fallback estimates.'},lander:{type:document.getElementById('lander').value,altitude_m:+document.getElementById('alt').value,vertical_speed_m_s:+document.getElementById('vel').value,approach_angle_deg:+document.getElementById('angle').value,fuel_percent:+document.getElementById('fuel').value,guidance:document.getElementById('guidance').value},simulation:{status:document.getElementById('status').textContent,altitude:document.getElementById('tAlt').textContent,vertical_speed:document.getElementById('tVel').textContent,fuel:document.getElementById('tFuel').textContent,result:document.getElementById('simresult').textContent}};}
+aiForm?.addEventListener('submit',async e=>{e.preventDefault();const text=aiInput.value.trim();if(!text)return;aiInput.value='';addChat('user',text);chatHistory.push({role:'user',content:text});const send=document.getElementById('aiSend');send.disabled=true;send.textContent='THINKING…';setText('aiStatus','CONNECTING · GROQ');const waiting=document.createElement('div');waiting.className='chat-msg assistant';waiting.textContent='Analyzing mission context…';chatLog.append(waiting);try{const res=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatHistory,context:copilotContext()})});const data=await res.json();waiting.remove();if(!res.ok)throw new Error(data.error||'Copilot request failed');chatHistory.push({role:'assistant',content:data.answer});addChat('assistant',data.answer);setText('aiStatus','ONLINE · GROQ');}catch(err){waiting.remove();addChat('assistant',err.message+'\n\nConfigure GROQ_API_KEY in your hosting environment to enable AI.');setText('aiStatus','CONFIGURATION NEEDED');}finally{send.disabled=false;send.textContent='SEND TO COPILOT →';}});
+document.querySelectorAll('[data-prompt]').forEach(b=>b.addEventListener('click',()=>{aiInput.value=b.dataset.prompt;aiInput.focus();}));
+document.getElementById('clearChat')?.addEventListener('click',()=>{chatHistory=[];chatLog.innerHTML='';addChat('assistant','Conversation cleared. Ask me about the selected lunar site or mission.');});
