@@ -240,7 +240,13 @@ def ai_reply(payload):
         with urlopen(req,timeout=35) as response: data=json.loads(response.read().decode())
         return {'answer':data['choices'][0]['message']['content']},200
     except Exception as e:
-        return {'error':'Copilot request failed: '+str(e)[:240]},502
+        detail=str(e)
+        try:
+            from urllib.error import HTTPError
+            if isinstance(e,HTTPError):
+                detail=e.read().decode('utf-8','replace')[:700]
+        except Exception: pass
+        return {'error':'Groq API error: '+detail[:700]},502
 
 
 if __name__=='__main__':
