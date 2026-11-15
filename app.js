@@ -119,7 +119,7 @@ function updateSite(){
   setText('locationSub',nasaBusy?'Querying NASA LOLA + Diviner…':`Selected on the 3D lunar surface • ${m.source}`);
   setText('elev',`${Math.round(m.elevation)} m`); setText('slope',`${m.slope.toFixed(1)}°`);
   setText('temp',`${Math.round(m.temp)} °C`); setText('sunAlt',`${m.sunAlt.toFixed(1)}°`); setText('illum',`${m.illum}%`);
-  setText('riskScore',m.score);
+  setText('riskScore',m.score);\n  setTimeout(refreshSimTerrain,0);
   const cls=m.score>=80?'LOW RELATIVE SCORE':m.score>=60?'MODERATE RELATIVE SCORE':'LOW CONFIDENCE / CHECK SITE';
   setText('siteClass',cls);
   document.getElementById('riskRing').style.borderColor=m.score>=80?'var(--green)':m.score>=60?'var(--amber)':'var(--red)';
@@ -214,8 +214,35 @@ const simCamera=new THREE.PerspectiveCamera(45,1,.1,100);simCamera.position.set(
 const simRenderer=new THREE.WebGLRenderer({canvas:simCanvas,antialias:true});simRenderer.setPixelRatio(Math.min(devicePixelRatio,2));simRenderer.outputColorSpace=THREE.SRGBColorSpace;
 const simOrbit=new OrbitControls(simCamera,simRenderer.domElement);simOrbit.enableDamping=true;simOrbit.target.set(0,0,0);
 simScene.add(new THREE.HemisphereLight(0xb9d8ff,0x30251b,1.7));const simSun=new THREE.DirectionalLight(0xffffff,2.4);simSun.position.set(5,8,4);simScene.add(simSun);
-const ground=new THREE.Mesh(new THREE.CircleGeometry(7,96),new THREE.MeshStandardMaterial({color:0x656b70,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.12;simScene.add(ground);
-const grid=new THREE.GridHelper(14,28,0x456078,0x26394a);grid.position.y=-.1;simScene.add(grid);
+// Site-specific procedural lunar surface: slope follows selected LOLA/prototype metrics,
+ // while seeded craters, ridges and rocks make each selected landing area visibly distinct.
+let siteTerrain=null,siteRocks=null;
+function refreshSimTerrain(){
+ if(siteTerrain){simScene.remove(siteTerrain);siteTerrain.geometry.dispose();siteTerrain.material.dispose();}
+ if(siteRocks){simScene.remove(siteRocks);siteRocks.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});}
+ const m=metrics(),seed=Math.abs(Math.sin(selected.lat*12.9898+selected.lon*78.233))*10000;
+ const geo=new THREE.PlaneGeometry(14,14,110,110);geo.rotateX(-Math.PI/2);
+ const p=geo.attributes.position;
+ for(let i=0;i<p.count;i++){
+  const x=p.getX(i),z=p.getZ(i),r=Math.sqrt(x*x+z*z);
+  const tilt=(x*Math.sin(selected.lat*Math.PI/180)+z*Math.cos(selected.lon*Math.PI/180))*Math.tan(Math.min(m.slope,18)*Math.PI/180)*.16;
+  const craters=Math.sin((x+seed*.001)*1.7)*Math.cos((z-seed*.002)*1.35)*.10;
+  const fine=Math.sin(x*8.1+seed)*Math.cos(z*7.3-seed)*.025+Math.sin(x*15+z*11)*.012;
+  const bowl=-.42*Math.exp(-Math.pow((r-3.1)/1.15,2))+.12*Math.exp(-Math.pow((r-4.2)/.55,2));
+  p.setY(i,tilt+craters+fine+bowl);
+ }
+ geo.computeVertexNormals();
+ siteTerrain=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x77736c,roughness:1,flatShading:false}));siteTerrain.receiveShadow=true;simScene.add(siteTerrain);
+ siteRocks=new THREE.Group();
+ let rand=()=>{const v=Math.sin(seed++*12.9898)*43758.5453;return v-Math.floor(v);};
+ for(let i=0;i<100;i++){const x=(rand()-.5)*12,z=(rand()-.5)*12,r=.035+rand()*.16;
+  const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(r,0),new THREE.MeshStandardMaterial({color:rand()>.5?0x5c5a56:0x918b80,roughness:1}));
+  rock.position.set(x,tiltAt(x,z,m),z);rock.rotation.set(rand()*3,rand()*3,rand()*3);siteRocks.add(rock);
+ }
+ simScene.add(siteRocks);
+}
+function tiltAt(x,z,m){return (x*Math.sin(selected.lat*Math.PI/180)+z*Math.cos(selected.lon*Math.PI/180))*Math.tan(Math.min(m.slope,18)*Math.PI/180)*.16+Math.sin(x*1.7+selected.lon)*Math.cos(z*1.35+selected.lat)*.1;}
+
 const lander3d=new THREE.Group();simScene.add(lander3d);
 const mat=(color,metalness=0)=>new THREE.MeshStandardMaterial({color,metalness,roughness:.55});
 const body=new THREE.Mesh(new THREE.BoxGeometry(.9,.65,.8),mat(0xd9e1e8,.35));lander3d.add(body);
