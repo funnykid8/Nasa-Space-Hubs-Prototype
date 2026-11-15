@@ -173,9 +173,38 @@ let running=false;
 function drawLander(y,angle,terrain,status){
   const w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);
   const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,"#01040a");g.addColorStop(1,"#101923");ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
-  ctx.fillStyle="#8ea8bd";for(let i=0;i<75;i++){ctx.globalAlpha=.15+(i%5)*.08;ctx.fillRect((i*79)%w,(i*43)%(terrain-15),1,1)}ctx.globalAlpha=1;
-  ctx.beginPath();ctx.moveTo(0,terrain);for(let x=0;x<=w;x+=14)ctx.lineTo(x,terrain+10*Math.sin(x*.025)+4*Math.sin(x*.073));ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();ctx.fillStyle="#575d63";ctx.fill();
-  ctx.save();ctx.translate(w/2,y);ctx.rotate(angle*Math.PI/180);ctx.fillStyle="#d8e3ea";ctx.fillRect(-18,-12,36,23);ctx.fillStyle="#9aabb8";ctx.fillRect(-11,-20,22,7);ctx.strokeStyle="#d8e3ea";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-14,10);ctx.lineTo(-25,22);ctx.moveTo(14,10);ctx.lineTo(25,22);ctx.stroke();ctx.restore();
+  // stars
+  ctx.fillStyle="#9bb4ca";for(let i=0;i<100;i++){ctx.globalAlpha=.2+(i%5)*.12;ctx.fillRect((i*79)%w,(i*43)%(terrain-20),1.2,1.2)}ctx.globalAlpha=1;
+  // lunar horizon
+  ctx.beginPath();ctx.moveTo(0,terrain);for(let x=0;x<=w;x+=12)ctx.lineTo(x,terrain+9*Math.sin(x*.025)+4*Math.sin(x*.073));ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();ctx.fillStyle="#575d63";ctx.fill();
+  // detailed robotic lunar lander (body, foil, windows, tanks, legs, footpads, antenna)
+  ctx.save();ctx.translate(w/2,y);ctx.rotate(angle*Math.PI/180);
+  ctx.shadowColor="#67dfff";ctx.shadowBlur=12;
+  // descent engine bell
+  ctx.fillStyle="#586875";ctx.beginPath();ctx.moveTo(-8,17);ctx.lineTo(8,17);ctx.lineTo(12,27);ctx.lineTo(-12,27);ctx.closePath();ctx.fill();
+  ctx.shadowBlur=0;
+  // landing struts + feet
+  ctx.strokeStyle="#d5e0e8";ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-15,8);ctx.lineTo(-29,30);ctx.lineTo(-38,30);ctx.moveTo(15,8);ctx.lineTo(29,30);ctx.lineTo(38,30);ctx.stroke();
+  ctx.fillStyle="#9eacb8";ctx.fillRect(-41,29,12,4);ctx.fillRect(29,29,12,4);
+  // side propellant tanks
+  ctx.fillStyle="#a8b7c4";ctx.fillRect(-25,-8,8,22);ctx.fillRect(17,-8,8,22);
+  ctx.fillStyle="#64798b";ctx.fillRect(-23,-5,4,15);ctx.fillRect(19,-5,4,15);
+  // central spacecraft bus
+  ctx.fillStyle="#dce5ec";ctx.fillRect(-17,-22,34,38);
+  ctx.fillStyle="#71889a";ctx.fillRect(-14,-19,28,5);
+  // gold thermal blanket panel
+  ctx.fillStyle="#c69a42";ctx.fillRect(-15,-12,30,17);
+  ctx.strokeStyle="#f4d58b";ctx.lineWidth=1;for(let x=-12;x<=12;x+=6){ctx.beginPath();ctx.moveTo(x,-12);ctx.lineTo(x,5);ctx.stroke();}
+  // instrument / cockpit window
+  ctx.fillStyle="#143f59";ctx.fillRect(-8,-21,16,7);ctx.strokeStyle="#7ce5ff";ctx.strokeRect(-8,-21,16,7);
+  // top antenna mast + dish
+  ctx.strokeStyle="#dbe8ef";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-22);ctx.lineTo(0,-34);ctx.stroke();
+  ctx.fillStyle="#c9d9e5";ctx.beginPath();ctx.arc(0,-35,5,Math.PI,0);ctx.fill();
+  // solar panels on cross booms
+  ctx.strokeStyle="#c7d5df";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-17,-3);ctx.lineTo(-39,-3);ctx.moveTo(17,-3);ctx.lineTo(39,-3);ctx.stroke();
+  ctx.fillStyle="#174c78";ctx.fillRect(-51,-13,12,20);ctx.fillRect(39,-13,12,20);
+  ctx.strokeStyle="#55b8ec";ctx.lineWidth=.7;for(let x=-48;x<=-42;x+=3){ctx.beginPath();ctx.moveTo(x,-13);ctx.lineTo(x,7);ctx.stroke();}for(let x=42;x<=48;x+=3){ctx.beginPath();ctx.moveTo(x,-13);ctx.lineTo(x,7);ctx.stroke();}
+  ctx.restore();
   if(status){ctx.font="900 16px system-ui";ctx.fillStyle=status==="success"?"#72f5a5":"#ff6675";ctx.fillText(status==="success"?"SOFT LANDING":"LANDING FAILED",16,25);}
 }
 function runSim(){
