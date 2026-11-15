@@ -226,6 +226,10 @@
 <script type="importmap">
 {"imports":{"three":"https://unpkg.com/three@0.180.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.180.0/examples/jsm/"}}
 </script>
+<script>
+// Keep tab navigation available even if the Three.js module/CDN fails.
+document.querySelectorAll('.tab[data-tab]').forEach(function(btn){btn.addEventListener('click',function(){document.querySelectorAll('.tab[data-tab]').forEach(function(t){t.classList.remove('active')});document.querySelectorAll('.tabpage').forEach(function(p){p.classList.remove('active')});btn.classList.add('active');var page=document.getElementById(btn.dataset.tab);if(page)page.classList.add('active')})});
+</script>
 <script type="module" src="app.js"></script>
 </body>
 </html>
