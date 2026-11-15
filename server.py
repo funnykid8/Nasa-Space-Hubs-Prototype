@@ -234,7 +234,7 @@ def ai_reply(payload):
           'Distinguish Diviner brightness temperature from true surface temperature, and never present this prototype score as certified landing safety. '
           'Moon has no substantial atmosphere: no atmospheric wind. Provide actionable analysis, units, assumptions, and safety caveats. '
           'Current selected-site and simulator context (JSON): '+json.dumps(context)[:5000])
-        body=json.dumps({'model':os.environ.get('GROQ_MODEL','llama-3.3-70b-versatile'),'temperature':0.35,'max_tokens':900,
+        body=json.dumps({'model':os.environ.get('GROQ_MODEL','openai/gpt-oss-120b'),'temperature':0.35,'max_tokens':900,
           'messages':[{'role':'system','content':system}]+safe}).encode()
         req=Request('https://api.groq.com/openai/v1/chat/completions',data=body,headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'},method='POST')
         with urlopen(req,timeout=35) as response: data=json.loads(response.read().decode())
