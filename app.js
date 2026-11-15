@@ -207,6 +207,29 @@ function drawLander(y,angle,terrain,status){
   ctx.restore();
   if(status){ctx.font="900 16px system-ui";ctx.fillStyle=status==="success"?"#72f5a5":"#ff6675";ctx.fillText(status==="success"?"SOFT LANDING":"LANDING FAILED",16,25);}
 }
+// Independent 3D descent scene (Three.js)
+const simRoot=document.getElementById("sim3d"),simCanvas=document.getElementById("sim3dCanvas");
+const simScene=new THREE.Scene();simScene.background=new THREE.Color(0x02050a);
+const simCamera=new THREE.PerspectiveCamera(45,1,.1,100);simCamera.position.set(4,3,7);
+const simRenderer=new THREE.WebGLRenderer({canvas:simCanvas,antialias:true});simRenderer.setPixelRatio(Math.min(devicePixelRatio,2));simRenderer.outputColorSpace=THREE.SRGBColorSpace;
+const simOrbit=new OrbitControls(simCamera,simRenderer.domElement);simOrbit.enableDamping=true;simOrbit.target.set(0,0,0);
+simScene.add(new THREE.HemisphereLight(0xb9d8ff,0x30251b,1.7));const simSun=new THREE.DirectionalLight(0xffffff,2.4);simSun.position.set(5,8,4);simScene.add(simSun);
+const ground=new THREE.Mesh(new THREE.CircleGeometry(7,96),new THREE.MeshStandardMaterial({color:0x656b70,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.12;simScene.add(ground);
+const grid=new THREE.GridHelper(14,28,0x456078,0x26394a);grid.position.y=-.1;simScene.add(grid);
+const lander3d=new THREE.Group();simScene.add(lander3d);
+const mat=(color,metalness=0)=>new THREE.MeshStandardMaterial({color,metalness,roughness:.55});
+const body=new THREE.Mesh(new THREE.BoxGeometry(.9,.65,.8),mat(0xd9e1e8,.35));lander3d.add(body);
+const foil=new THREE.Mesh(new THREE.BoxGeometry(.72,.45,.04),mat(0xc49a43,.4));foil.position.z=.42;lander3d.add(foil);
+const window3=new THREE.Mesh(new THREE.BoxGeometry(.28,.14,.04),mat(0x31a8d5,.4));window3.position.set(0,.18,.45);lander3d.add(window3);
+const engine=new THREE.Mesh(new THREE.CylinderGeometry(.16,.28,.35,16),mat(0x596875,.6));engine.position.y=-.48;lander3d.add(engine);
+for(const x of [-.55,.55])for(const z of [-.45,.45]){const leg=new THREE.Mesh(new THREE.CylinderGeometry(.035,.045,.72,8),mat(0xcbd6df,.6));leg.position.set(x,-.55,z);leg.rotation.z=x*.35;lander3d.add(leg);const foot=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.05,12),mat(0x9aa8b4));foot.position.set(x*1.25,-.92,z*1.2);lander3d.add(foot);}
+for(const x of [-1.25,1.25]){const panel=new THREE.Mesh(new THREE.BoxGeometry(.85,.04,.55),mat(0x155a91,.5));panel.position.set(x,.05,0);lander3d.add(panel);const boom=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.75,8),mat(0xcbd6df));boom.rotation.z=Math.PI/2;boom.position.x=x*.55;lander3d.add(boom);}
+const mast=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.45,8),mat(0xdce5ec));mast.position.y=.58;lander3d.add(mast);
+function resizeSim3d(){const w=simRoot.clientWidth||600,h=simRoot.clientHeight||360;simCamera.aspect=w/h;simCamera.updateProjectionMatrix();simRenderer.setSize(w,h,false);}
+window.addEventListener("resize",resizeSim3d);resizeSim3d();
+(function sim3dLoop(){requestAnimationFrame(sim3dLoop);simOrbit.update();simRenderer.render(simScene,simCamera);})();
+function setSim3dAltitude(m){lander3d.position.y=Math.max(.2,m/500);}
+
 function runSim(){
   if(running)return;
   let alt=Number(document.getElementById("alt").value),vel=Number(document.getElementById("vel").value),fuel=Number(document.getElementById("fuel").value),angle=Number(document.getElementById("angle").value);
@@ -220,12 +243,12 @@ function runSim(){
     const thrustAccel=1.62+accel,thrustRatio=clamp(thrustAccel/5.82,0,1);
     if(fuel<=0){vel-=1.62*dt;}else{vel+=accel*dt;fuel=Math.max(0,fuel-thrustRatio*.10*dt);}
     alt+=vel*dt;t+=dt;
-    drawLander(terrain-(Math.max(0,alt)/Math.max(2500,alt+1))*(terrain-35),angle,terrain);
+    drawLander(terrain-(Math.max(0,alt)/Math.max(2500,alt+1))*(terrain-35),angle,terrain);setSim3dAltitude(alt);
     setText("clock",`T+${t.toFixed(1)} s`);setText("tAlt",`${Math.max(0,Math.round(alt))} m`);
     setText("tVel",`${vel.toFixed(1)} m/s`);setText("tFuel",`${Math.round(fuel)}%`);setText("tSlope",`${slope.toFixed(1)}°`);
     if(alt<=0){
       running=false;const safe=Math.abs(vel)<=6&&slope<=12&&fuel>0;
-      setText("status",safe?"TOUCHDOWN":"CRASH");drawLander(terrain-16,0,terrain,safe?"success":"failure");
+      setText("status",safe?"TOUCHDOWN":"CRASH");drawLander(terrain-16,0,terrain,safe?"success":"failure");setSim3dAltitude(0);
       setText("simresult",safe?`🟢 Touchdown! Vertical speed ${vel.toFixed(1)} m/s · slope ${slope.toFixed(1)}° · fuel ${fuel.toFixed(1)}%.`:`🔴 Unsafe touchdown. Vertical speed ${vel.toFixed(1)} m/s · slope ${slope.toFixed(1)}° · fuel ${fuel.toFixed(1)}%.`);
       return;
     }
