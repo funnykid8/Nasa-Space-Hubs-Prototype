@@ -186,6 +186,17 @@ class Handler(SimpleHTTPRequestHandler):
         path=path.split('?',1)[0]
         rel=os.path.normpath(path.lstrip('/'))
         return os.path.join(ROOT,rel)
+    def do_POST(self):
+        p=urlparse(self.path)
+        if p.path!='/api/ai': self.send_error(404); return
+        try:
+            length=min(int(self.headers.get('Content-Length','0')),30000)
+            payload=json.loads(self.rfile.read(length) or b'{}')
+            data,status=ai_reply(payload); body=json.dumps(data).encode()
+            self.send_response(status); self.send_header('Content-Type','application/json'); self.send_header('Access-Control-Allow-Origin','*'); self.end_headers(); self.wfile.write(body)
+        except Exception as e:
+            body=json.dumps({'error':str(e)[:200]}).encode(); self.send_response(400); self.send_header('Content-Type','application/json'); self.end_headers(); self.wfile.write(body)
+
     def do_GET(self):
         p=urlparse(self.path)
         if p.path=='/api/site':
@@ -202,6 +213,35 @@ class Handler(SimpleHTTPRequestHandler):
             body=json.dumps({'status':'ok','nasa_gds':'configured','message':'Backend ready to query NASA PDS Geosciences GDS.'}).encode()
             self.send_response(200); self.send_header('Content-Type','application/json'); self.end_headers(); self.wfile.write(body); return
         return super().do_GET()
+
+
+
+# AI mission copilot (Groq OpenAI-compatible API; server-side secret only)
+def ai_reply(payload):
+    key=os.environ.get('GROQ_API_KEY','').strip()
+    if not key: return {'error':'AI is not configured yet. Add GROQ_API_KEY to your Render environment variables.'},503
+    try:
+        from urllib.request import Request, urlopen
+        messages=payload.get('messages',[])
+        if not isinstance(messages,list): raise ValueError('messages must be a list')
+        safe=[]
+        for m in messages[-12:]:
+            role=m.get('role'); content=m.get('content','')
+            if role in ('user','assistant') and isinstance(content,str): safe.append({'role':role,'content':content[:5000]})
+        context=payload.get('context',{})
+        system=('You are Lunar Mission Copilot for a NASA Space Apps educational prototype. Be clear, scientifically cautious, concise but useful. '
+          'Never claim calculations or readings are NASA measurements unless context says they are. Explain that fallback values are illustrative. '
+          'Distinguish Diviner brightness temperature from true surface temperature, and never present this prototype score as certified landing safety. '
+          'Moon has no substantial atmosphere: no atmospheric wind. Provide actionable analysis, units, assumptions, and safety caveats. '
+          'Current selected-site and simulator context (JSON): '+json.dumps(context)[:5000])
+        body=json.dumps({'model':os.environ.get('GROQ_MODEL','llama-3.3-70b-versatile'),'temperature':0.35,'max_tokens':900,
+          'messages':[{'role':'system','content':system}]+safe}).encode()
+        req=Request('https://api.groq.com/openai/v1/chat/completions',data=body,headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'},method='POST')
+        with urlopen(req,timeout=35) as response: data=json.loads(response.read().decode())
+        return {'answer':data['choices'][0]['message']['content']},200
+    except Exception as e:
+        return {'error':'Copilot request failed: '+str(e)[:240]},502
+
 
 if __name__=='__main__':
     os.chdir(ROOT)
