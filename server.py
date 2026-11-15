@@ -216,12 +216,12 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 
-# AI mission copilot (OpenAI API; server-side secret only)
+# AI mission copilot (Groq API; server-side secret only)
 def ai_reply(payload):
-    key=os.environ.get('OPENAI_API_KEY','').strip()
-    if not key: return {'error':'AI is not configured. Add OPENAI_API_KEY in Render Environment Variables.'},503
+    key=os.environ.get('GROQ_API_KEY','').strip()
+    if not key: return {'error':'AI is not configured. Add GROQ_API_KEY in Render Environment Variables.'},503
     try:
-        from openai import OpenAI
+        from groq import Groq
         messages=payload.get('messages',[])
         if not isinstance(messages,list): raise ValueError('messages must be a list')
         safe=[]
@@ -229,21 +229,20 @@ def ai_reply(payload):
             role=m.get('role'); content=m.get('content','')
             if role in ('user','assistant') and isinstance(content,str): safe.append({'role':role,'content':content[:5000]})
         context=payload.get('context',{})
-        system=('You are Lunar Mission Copilot for a NASA Space Apps educational prototype. Be clear, scientifically cautious, concise but useful. '
-          'Never claim calculations or readings are NASA measurements unless context says they are. Explain that fallback values are illustrative. '
-          'Distinguish Diviner brightness temperature from true surface temperature, and never present this prototype score as certified landing safety. '
-          'Moon has no substantial atmosphere: no atmospheric wind. Provide actionable analysis, units, assumptions, and safety caveats. '
-          'Current selected-site and simulator context (JSON): '+json.dumps(context)[:5000])
-        response=OpenAI(api_key=key).chat.completions.create(
-            model=os.environ.get('OPENAI_MODEL','gpt-4o-mini'),
-            temperature=0.35,
-            max_tokens=900,
+        system=('You are SELENE, a high-quality lunar mission and landing-site advisor for a NASA Space Apps prototype. '
+          'Give specific, useful, structured answers; explain tradeoffs and recommend next actions. Never invent NASA measurements. '
+          'Clearly label fallback estimates and prototype scores; distinguish Diviner brightness temperature from true surface temperature. '
+          'Moon has no substantial atmosphere, so atmospheric wind is not applicable. This is educational, not certified flight guidance. '
+          'Use the selected-site and simulator context (JSON): '+json.dumps(context)[:5000])
+        response=Groq(api_key=key).chat.completions.create(
+            model=os.environ.get('GROQ_MODEL','openai/gpt-oss-120b'),
+            temperature=0.35, max_tokens=1100,
             messages=[{'role':'system','content':system}]+safe
         )
         answer=response.choices[0].message.content or ''
         return {'answer':answer},200
     except Exception as e:
-        return {'error':'OpenAI API error: '+str(e)[:700]},502
+        return {'error':'Groq API error: '+str(e)[:700]},502
 
 if __name__=='__main__':
     os.chdir(ROOT)
