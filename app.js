@@ -223,3 +223,29 @@ function copilotContext(){const m=metrics();return {selected_site:{latitude:+sel
 aiForm?.addEventListener('submit',async e=>{e.preventDefault();const text=aiInput.value.trim();if(!text)return;aiInput.value='';addChat('user',text);chatHistory.push({role:'user',content:text});const send=document.getElementById('aiSend');send.disabled=true;send.textContent='THINKING…';setText('aiStatus','CONNECTING · GROQ');const waiting=document.createElement('div');waiting.className='chat-msg assistant';waiting.textContent='Analyzing mission context…';chatLog.append(waiting);try{const res=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatHistory,context:copilotContext()})});const data=await res.json();waiting.remove();if(!res.ok)throw new Error(data.error||'Copilot request failed');chatHistory.push({role:'assistant',content:data.answer});addChat('assistant',data.answer);setText('aiStatus','ONLINE · GROQ');}catch(err){waiting.remove();addChat('assistant',err.message);setText('aiStatus','REQUEST FAILED');}finally{send.disabled=false;send.textContent='SEND TO COPILOT →';}});
 document.querySelectorAll('[data-prompt]').forEach(b=>b.addEventListener('click',()=>{aiInput.value=b.dataset.prompt;aiInput.focus();}));
 document.getElementById('clearChat')?.addEventListener('click',()=>{chatHistory=[];chatLog.innerHTML='';addChat('assistant','Conversation cleared. Ask me about the selected lunar site or mission.');});
+
+
+// SELENE mission-site finder + illustrative temperature overlays
+const recommendationBox=document.getElementById('siteRecommendations');
+function prototypeSiteScore(lat,lon){const m=fallbackMetrics(lat,lon);return Math.round(Math.max(0,100-m.slope*4)*.55+m.illum*.25+Math.max(0,100-Math.abs(m.temp+80))*.2);}
+document.getElementById('recommendSite')?.addEventListener('click',()=>{
+ const candidates=[];
+ for(let lat=-80;lat<=80;lat+=5)for(let lon=-180;lon<180;lon+=5){const m=fallbackMetrics(lat,lon);if(m.slope<=10)candidates.push({lat,lon,score:prototypeSiteScore(lat,lon),slope:m.slope,illum:m.illum,temp:m.temp});}
+ candidates.sort((a,b)=>b.score-a.score);
+ const top=candidates.slice(0,5);recommendationBox.innerHTML='<b>TOP 5 PROTOTYPE CANDIDATES (ESTIMATED)</b>'+top.map((x,i)=>'<button class="site-candidate" data-lat="'+x.lat+'" data-lon="'+x.lon+'"><strong>#'+(i+1)+' · '+x.lat+'°, '+x.lon+'°</strong><span>Score '+x.score+' · slope '+x.slope.toFixed(1)+'° · light '+x.illum+'%</span></button>').join('');
+ recommendationBox.querySelectorAll('[data-lat]').forEach(b=>b.addEventListener('click',()=>{selected={lat:+b.dataset.lat,lon:+b.dataset.lon};updateSite();queryNASA();}));
+ setText('mapNote','Candidates are ranked by an illustrative prototype model, not a NASA-certified safety map. Verify each with live LOLA data.');
+});
+function mapOverlay(mode){
+ moonGroup.children.filter(o=>o.userData.mapDot).forEach(o=>moonGroup.remove(o));
+ for(let lat=-75;lat<=75;lat+=15)for(let lon=-180;lon<180;lon+=15){
+ const m=fallbackMetrics(lat,lon);const val=mode==='hot'?m.temp:(-m.temp);
+ const color=mode==='hot'?new THREE.Color(0xff4b20):new THREE.Color(0x39aaff);
+ const dot=new THREE.Mesh(new THREE.SphereGeometry(.012,8,8),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.45+Math.min(1,val/220)*.5}));
+ dot.position.copy(latLonToXYZ(lat,lon,1.012));dot.userData.mapDot=true;moonGroup.add(dot);
+ }
+ setText('mapNote',mode==='hot'?'HOT MAP · illustrative warm-region proxy (not measured NASA thermal map).':'COLD MAP · illustrative cold-region proxy (not measured NASA thermal map).');
+}
+document.getElementById('hotMap')?.addEventListener('click',()=>mapOverlay('hot'));
+document.getElementById('coldMap')?.addEventListener('click',()=>mapOverlay('cold'));
+document.getElementById('clearMap')?.addEventListener('click',()=>{moonGroup.children.filter(o=>o.userData.mapDot).forEach(o=>moonGroup.remove(o));setText('mapNote','Overlay cleared. NASA observations and prototype metrics are shown separately.');});
