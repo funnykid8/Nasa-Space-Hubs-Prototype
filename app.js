@@ -249,3 +249,19 @@ function mapOverlay(mode){
 document.getElementById('hotMap')?.addEventListener('click',()=>mapOverlay('hot'));
 document.getElementById('coldMap')?.addEventListener('click',()=>mapOverlay('cold'));
 document.getElementById('clearMap')?.addEventListener('click',()=>{moonGroup.children.filter(o=>o.userData.mapDot).forEach(o=>moonGroup.remove(o));setText('mapNote','Overlay cleared. NASA observations and prototype metrics are shown separately.');});
+
+
+// SELENE personalized mission recommendation powered by the configured Groq endpoint
+document.getElementById('seleneRecommend')?.addEventListener('click',async()=>{
+ const out=document.getElementById('seleneResult'),btn=document.getElementById('seleneRecommend');
+ const prefs={objective:document.getElementById('missionObjective').value,risk_tolerance:document.getElementById('missionRisk').value,sunlight_priority:document.getElementById('missionSun').value,ice_priority:document.getElementById('missionIce').value};
+ const m=metrics(),siteContext={coordinates:{latitude:selected.lat,longitude:selected.lon},display_metrics:m,nasa_observations:nasaSite||'Unavailable; do not treat fallback estimates as measured NASA data',preferences:prefs};
+ out.textContent='SELENE is evaluating your selected site and mission priorities…';btn.disabled=true;
+ try{
+  const prompt='Give a PERSONALIZED landing-site recommendation for this mission. Priorities: '+JSON.stringify(prefs)+'. Selected lunar site and data: '+JSON.stringify(siteContext)+'. Provide concise GO/CAUTION/NO-GO, explain fit to priorities, identify evidence vs unavailable data, 2-3 risks/tradeoffs, and a better alternative/next step if appropriate. Do not invent measurements or claim actual ice detection from coordinates alone.';
+  const res=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:prompt}],context:siteContext})});
+  const data=await res.json();if(!res.ok)throw new Error(data.error||'AI request failed');
+  out.textContent=data.answer;document.getElementById('aiStatus')&&(document.getElementById('aiStatus').textContent='ONLINE · GROQ');
+ }catch(e){out.textContent='Recommendation failed: '+e.message+' — check GROQ_API_KEY and Render logs.'}
+ finally{btn.disabled=false;}
+});
