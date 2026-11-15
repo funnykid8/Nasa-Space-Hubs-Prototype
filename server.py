@@ -236,7 +236,7 @@ def ai_reply(payload):
           'Current selected-site and simulator context (JSON): '+json.dumps(context)[:5000])
         body=json.dumps({'model':os.environ.get('GROQ_MODEL','openai/gpt-oss-120b'),'temperature':0.35,'max_tokens':900,
           'messages':[{'role':'system','content':system}]+safe}).encode()
-        req=Request('https://api.groq.com/openai/v1/chat/completions',data=body,headers={'Authorization':'Bearer '+key,'Content-Type':'application/json'},method='POST')
+        req=Request('https://api.groq.com/openai/v1/chat/completions',data=body,headers={'Authorization':'Bearer '+key,'Content-Type':'application/json','User-Agent':'NASA-Space-Hubs-Copilot/1.0'},method='POST')
         with urlopen(req,timeout=35) as response: data=json.loads(response.read().decode())
         return {'answer':data['choices'][0]['message']['content']},200
     except Exception as e:
